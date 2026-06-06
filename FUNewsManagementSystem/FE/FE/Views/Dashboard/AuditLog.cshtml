@@ -1,0 +1,514 @@
+﻿@{
+    ViewData["Title"] = "Audit Log";
+}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-lg-6">
+            <h2 class="mb-0">
+               
+                Audit Log
+            </h2>
+            <p class="text-muted">Track all changes in the system</p>
+        </div>
+        <div class="col-12 col-lg-6 text-lg-end">
+            <button class="btn btn-outline-primary" onclick="refreshLogs()">
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class=" mb-4 ">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Action</label>
+                    <select class="form-select" id="filterAction">
+                        <option value="">All</option>
+                        <option value="Post">Create</option>
+                        <option value="Put">Update</option>
+                        <option value="Delete">Delete</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Entity Type</label>
+                    <select class="form-select" id="filterEntity">
+                        <option value="">All</option>
+                        <option value="Category">Category</option>
+                        <option value="NewsArticle">News Article</option>
+                        <option value="Tag">Tag</option>
+                        <option value="SystemAccount">User Account</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">User</label>
+                    <input type="text" class="form-control" id="filterUser" placeholder="Search by email...">
+                </div>
+                <div class="col-12 col-md-2">
+                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                         Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div id="statsCards">
+        <p>Total Logs: <span id="totalLogs">0</span></p>
+        <p>Created: <span id="postCount">0</span></p>
+        <p>Updated: <span id="putCount">0</span></p>
+        <p>Deleted: <span id="deleteCount">0</span></p>
+    </div>
+
+
+
+    <!-- Logs Table -->
+    <div class=" shadow-sm">
+        <div class="card-body">
+            <div id="loadingSpinner" class="text-center py-5 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading data...</p>
+            </div>
+            <div id="logsTable" class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">ID</th>
+                            <th style="width: 10%">Action</th>
+                            <th style="width: 12%">Entity</th>
+                            <th style="width: 8%">Entity ID</th>
+                            <th style="width: 20%">User</th>
+                            <th style="width: 15%">Timestamp</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody"></tbody>
+                </table>
+                <!-- Pagination -->
+                <div class="row align-items-center mt-3">
+                    <div class="col-12 col-md-6">
+                        <p class="text-muted mb-0">
+                            Showing <strong id="showingFrom">0</strong> - <strong id="showingTo">0</strong>
+                            of <strong id="totalCount">0</strong> records
+                        </p>
+                    </div>
+                    <div class="col-12 col-md-6 text-md-end">
+                        <div class="d-inline-flex align-items-center gap-2">
+                            <label class="mb-0">Rows per page:</label>
+                            <select class="form-select form-select-sm" id="pageSize" style="width: auto;" onchange="changePageSize()">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <nav class="d-inline-flex ms-3">
+                            <ul class="pagination mb-0" id="pagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+                <div id="emptyState" class="text-center py-5 d-none">
+                   
+                    <p class="mt-3 text-muted">No data available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="detailModalLabel">
+                    Change Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <strong>Log Information</strong>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%">Log ID:</td>
+                                        <td><strong id="detailLogId"></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Action:</td>
+                                        <td id="detailAction"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Entity:</td>
+                                        <td><span class="badge bg-info" id="detailEntity"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Entity ID:</td>
+                                        <td><code id="detailEntityId"></code></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <strong>User Information</strong>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%">User ID:</td>
+                                        <td><strong id="detailUserId"></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Email:</td>
+                                        <td id="detailUserName"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Timestamp:</td>
+                                        <td id="detailTimestamp"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4" id="dataComparison">
+                    <h6 class="mb-3">
+                       Data Comparison
+                    </h6>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    Before Change
+                                </div>
+                                <div class="card-body p-0">
+                                    <pre id="beforeData" class="mb-0" style="max-height: 400px; overflow-y: auto;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    After Change
+                                </div>
+                                <div class="card-body p-0">
+                                    <pre id="afterData" class="mb-0" style="max-height: 400px; overflow-y: auto;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // Pagination state
+        let currentPage = 1;
+        let pageSize = 25;
+        let totalCount = 0;
+        let currentFilters = {
+            action: '',
+            entity: '',
+            user: ''
+        };
+
+        // Build OData query string
+        function buildODataQuery() {
+            let filters = [];
+            if (currentFilters.action) filters.push(`Action eq '${currentFilters.action}'`);
+            if (currentFilters.entity) filters.push(`EntityName eq '${currentFilters.entity}'`);
+            if (currentFilters.user) filters.push(`contains(tolower(UserName), '${currentFilters.user.toLowerCase()}')`);
+            let queryParams = [];
+            if (filters.length > 0) queryParams.push(`$filter=${filters.join(' and ')}`);
+            queryParams.push('$count=true');
+            queryParams.push('$orderby=Timestamp desc');
+            const skip = (currentPage - 1) * pageSize;
+            queryParams.push(`$top=${pageSize}`);
+            queryParams.push(`$skip=${skip}`);
+            return queryParams.join('&');
+        }
+
+        // Load audit logs with OData
+        async function loadAuditLogs() {
+            try {
+                $('#loadingSpinner').removeClass('d-none');
+                $('#logsTable').addClass('d-none');
+                const odataQuery = buildODataQuery();
+                const url = `https://localhost:7135/odata/AuditLog?${odataQuery}`;
+                console.log('OData URL:', url);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                console.log('OData Response:', data);
+                const logs = data.value || data;
+                totalCount = data['@@odata.count'] || logs.length;
+                renderTable(logs);
+                updatePagination();
+                await updateStats();
+                $('#loadingSpinner').addClass('d-none');
+                $('#logsTable').removeClass('d-none');
+            } catch (error) {
+                console.error('Error loading audit logs:', error);
+                $('#loadingSpinner').addClass('d-none');
+                $('#logsTable').html(`
+                    <div class="alert alert-danger">
+                        
+                        <strong>Error!</strong> Unable to load audit logs.
+                        <br><small>${error.message}</small>
+                    </div>
+                `).removeClass('d-none');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const totalUrl = `https://localhost:7135/api/AuditLog?$count=true&$top=0`;
+                const totalResponse = await fetch(totalUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                const totalData = await totalResponse.json();
+                const total = totalData['@@odata.count'] || 0;
+
+                const postUrl = `https://localhost:7135/api/AuditLog?$filter=Action eq 'Post'&$count=true&$top=0`;
+                const postResponse = await fetch(postUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                const postData = await postResponse.json();
+                const postCount = postData['@@odata.count'] || 0;
+
+                const putUrl = `https://localhost:7135/api/AuditLog?$filter=Action eq 'Put'&$count=true&$top=0`;
+                const putResponse = await fetch(putUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                const putData = await putResponse.json();
+                const putCount = putData['@@odata.count'] || 0;
+
+                const deleteUrl = `https://localhost:7135/api/AuditLog?$filter=Action eq 'Delete'&$count=true&$top=0`;
+                const deleteResponse = await fetch(deleteUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                const deleteData = await deleteResponse.json();
+                const deleteCount = deleteData['@@odata.count'] || 0;
+
+                $('#totalLogs').text(total);
+                $('#postCount').text(postCount);
+                $('#putCount').text(putCount);
+                $('#deleteCount').text(deleteCount);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Render table
+        function renderTable(logs) {
+            const tbody = $('#logsTableBody');
+            tbody.empty();
+            if (logs.length === 0) {
+                $('#emptyState').removeClass('d-none');
+                return;
+            }
+            $('#emptyState').addClass('d-none');
+            logs.forEach(log => {
+                const actionBadge = getActionBadge(log.Action);
+                const timestamp = new Date(log.Timestamp).toLocaleString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+                const row = `
+                    <tr onclick="showDetail(${log.AuditLogId})">
+                        <td><strong>#${log.AuditLogId}</strong></td>
+                        <td>${actionBadge}</td>
+                        <td><span class="badge bg-info">${log.EntityName}</span></td>
+                        <td><code>${log.EntityId}</code></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                              
+                                <div>
+                                    <div class="fw-semibold">${log.UserName}</div>
+                                    <small class="text-muted">User ID: ${log.UserId}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                           ${timestamp}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showDetail(${log.AuditLogId})">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            const from = (currentPage - 1) * pageSize + 1;
+            const to = Math.min(currentPage * pageSize, totalCount);
+            $('#showingFrom').text(from);
+            $('#showingTo').text(to);
+            $('#totalCount').text(totalCount);
+        }
+
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            const pagination = $('#pagination');
+            pagination.empty();
+            if (totalPages <= 1) return;
+            pagination.append(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+            if (startPage > 1) {
+                pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`);
+                if (startPage > 2) pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+            }
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.append(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                    </li>
+                `);
+            }
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+                pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`);
+            }
+            pagination.append(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        }
+
+        // Change page
+        function changePage(page) {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadAuditLogs();
+            $('html, body').animate({ scrollTop: $("#logsTable").offset().top - 100 }, 300);
+        }
+
+        // Change page size
+        function changePageSize() {
+            pageSize = parseInt($('#pageSize').val());
+            currentPage = 1;
+            loadAuditLogs();
+        }
+
+        // Get action badge HTML
+        function getActionBadge(action) {
+            const badges = {
+                'Post': '<span class="badge bg-success action-badge"> Create</span>',
+                'Put': '<span class="badge bg-warning action-badge">Update</span>',
+                'Delete': '<span class="badge bg-danger action-badge"> Delete</span>'
+            };
+            return badges[action] || `<span class="badge bg-secondary action-badge">${action}</span>`;
+        }
+
+        // Show detail modal
+        async function showDetail(logId) {
+            try {
+                const response = await fetch(`https://localhost:7135/api/AuditLog?$filter=AuditLogId eq ${logId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                const log = data.value ? data.value[0] : data[0];
+                if (!log) return;
+                $('#detailLogId').text(log.AuditLogId);
+                $('#detailAction').html(getActionBadge(log.Action));
+                $('#detailEntity').text(log.EntityName);
+                $('#detailEntityId').text(log.EntityId);
+                $('#detailUserId').text(log.UserId);
+                $('#detailUserName').text(log.UserName);
+                $('#detailTimestamp').text(new Date(log.Timestamp).toLocaleString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                }));
+                const beforeData = log.BeforeData && log.BeforeData.trim() ? formatJson(log.BeforeData) : '<em class="text-muted">No data (Created)</em>';
+                const afterData = log.AfterData && log.AfterData.trim() ? formatJson(log.AfterData) : '<em class="text-muted">No data (Deleted)</em>';
+                $('#beforeData').html(beforeData);
+                $('#afterData').html(afterData);
+                new bootstrap.Modal($('#detailModal')[0]).show();
+            } catch (error) {
+                console.error('Error loading log detail:', error);
+            }
+        }
+
+        // Format JSON with syntax highlighting
+        function formatJson(jsonString) {
+            try {
+                const obj = JSON.parse(jsonString);
+                const formatted = JSON.stringify(obj, null, 2);
+                const div = document.createElement('div');
+                div.textContent = formatted;
+                let escaped = div.innerHTML;
+                escaped = escaped
+                    .replace(/&quot;([^&]+?)&quot;(\s*):/g, '<span style="color: #8b3a62; font-weight: 600;">"$1"</span>$2:')
+                    .replace(/:(\s*)&quot;([^&]*?)&quot;/g, ':$1<span style="color: #22863a;">"$2"</span>')
+                    .replace(/:(\s*)(-?\d+\.?\d*)/g, ':$1<span style="color: #005cc5;">$2</span>')
+                    .replace(/:(\s*)(true|false)/g, ':$1<span style="color: #d73a49; font-weight: 600;">$2</span>')
+                    .replace(/:(\s*)(null)/g, ':$1<span style="color: #6a737d;">$2</span>');
+                return escaped;
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                const div = document.createElement('div');
+                div.textContent = jsonString;
+                return div.innerHTML;
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            currentFilters.action = $('#filterAction').val();
+            currentFilters.entity = $('#filterEntity').val();
+            currentFilters.user = $('#filterUser').val();
+            currentPage = 1;
+            loadAuditLogs();
+        }
+
+        // Refresh logs
+        function refreshLogs() {
+            $('#filterAction').val('');
+            $('#filterEntity').val('');
+            $('#filterUser').val('');
+            currentFilters = { action: '', entity: '', user: '' };
+            currentPage = 1;
+            loadAuditLogs();
+        }
+
+        // Initialize
+        $(document).ready(function() {
+            loadAuditLogs();
+            $('#filterUser').on('keypress', function(e) {
+                if (e.which === 13) applyFilters();
+            });
+        });
+    </script>
+}

@@ -1,0 +1,595 @@
+﻿@{
+    ViewData["Title"] = "Category Management";
+}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-lg-6">
+            <h2 class="mb-0">
+               
+                Category Management
+            </h2>
+            <p class="text-muted">Manage news categories</p>
+        </div>
+        <div class="col-12 col-lg-6 text-lg-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="openCreateModal()">
+           Create New Category
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class=" mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search by name or description...">
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <select class="form-select" id="pageSizeSelect">
+                        <option value="5">5 / page</option>
+                        <option value="10" selected>10 / page</option>
+                        <option value="20">20 / page</option>
+                        <option value="50">50 / page</option>
+                        <option value="100">100 / page</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button class="btn btn-outline-secondary w-100" id="btnRefresh">
+                       Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="alert alert-danger d-none" role="alert">
+       
+        <span id="errorMessage"></span>
+        <button class="btn btn-sm btn-danger ms-3" onclick="loadCategories()">
+           Retry
+        </button>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="text-center py-5 d-none">
+      
+        <p class="mt-3 text-muted">No categories found</p>
+    </div>
+
+    <!-- Categories Table -->
+    <div id="categoriesContainer" class=" shadow-sm d-none">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Category Name</th>
+                            <th>Description</th>
+                            <th class="text-center">Articles</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="paginationContainer" class="row align-items-center mt-4 g-3 d-none">
+        <div class="col-12 col-md-6">
+            <span class="text-muted">
+                Showing <strong id="showingStart">1</strong> - <strong id="showingEnd">10</strong> of <strong id="totalRecords">0</strong> records
+            </span>
+        </div>
+        <div class="col-12 col-md-6 text-md-end">
+            <nav class="d-inline-flex">
+                <ul class="pagination mb-0" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Category Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">Create New Category</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="categoryName" class="form-label">Category Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="categoryName" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="parentCategoryId" class="form-label">Parent Category</label>
+                            <input type="number" class="form-control" id="parentCategoryId" placeholder="Leave empty if root">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="categoryDesciption" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="categoryDesciption" rows="4" required></textarea>
+                    </div>
+                    <div class="mt-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="categoryIsActive" checked>
+                            <label class="form-check-label" for="categoryIsActive">Active Category</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveCategory">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="saveSpinner"></span>
+                   </i>Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Category Detail Modal -->
+<div class="modal fade" id="viewCategoryModal" tabindex="-1" aria-labelledby="viewCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewCategoryModalLabel">Category Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="categoryDetailContent">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let totalRecords = 0;
+        let itemsPerPage = 10;
+        let isEditMode = false;
+        let currentSearchTerm = '';
+        let currentStatusFilter = '';
+
+        $(document).ready(function() {
+            loadCategories();
+
+            const debouncedSearch = debounce(function() {
+                currentSearchTerm = $('#searchInput').val().trim();
+                currentPage = 1;
+                loadCategories();
+            }, 500);
+            $('#searchInput').on('input', debouncedSearch);
+
+            $('#statusFilter').change(function() {
+                currentStatusFilter = $(this).val();
+                currentPage = 1;
+                loadCategories();
+            });
+
+            $('#pageSizeSelect').change(function() {
+                itemsPerPage = parseInt($(this).val());
+                currentPage = 1;
+                loadCategories();
+            });
+
+            $('#btnRefresh').click(function() {
+                currentSearchTerm = '';
+                currentStatusFilter = '';
+                currentPage = 1;
+                itemsPerPage = 10;
+                $('#searchInput').val('');
+                $('#statusFilter').val('');
+                $('#pageSizeSelect').val('10');
+                loadCategories();
+            });
+
+            $('#btnSaveCategory').click(saveCategory);
+            $('#categoryModal').on('hidden.bs.modal', resetForm);
+        });
+
+        function loadCategories() {
+            showLoading();
+            hideError();
+            const params = new URLSearchParams({
+                page: currentPage,
+                pageSize: itemsPerPage
+            });
+            if (currentSearchTerm) params.append('searchTerm', currentSearchTerm);
+            if (currentStatusFilter) params.append('statusFilter', currentStatusFilter);
+
+            $.ajax({
+                url: `/Category/GetCategories?${params.toString()}`,
+                method: "GET",
+                success: function(response) {
+                    hideLoading();
+                    const categories = response.value || [];
+                    totalRecords = response['odata.count'] || categories.length;
+
+                    if (categories.length === 0) {
+                        showEmptyState();
+                    } else {
+                        renderCategories(categories);
+                    }
+                },
+                error: function(xhr) {
+                    hideLoading();
+                    handleError(xhr, "Unable to load categories!");
+                }
+            });
+        }
+
+        function renderCategories(categories) {
+            const tbody = $('#categoriesTableBody');
+            tbody.empty();
+            if (categories.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            categories.forEach(category => {
+                const id = category.CategoryId;
+                const name = category.CategoryName || 'N/A';
+                const description = category.CategoryDesciption || '';
+                const isActive = category.IsActive;
+                const articleCount = category.ArticleCount || 0;
+
+                const row = `
+                    <tr>
+                        <td><strong>#${id}</strong></td>
+                        <td>
+                          
+                            ${escapeHtml(name)}
+                        </td>
+                        <td>
+                            <small class="text-muted">${escapeHtml(description) || 'No description'}</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">${articleCount}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" ${isActive ? 'checked' : ''}
+                                       onchange="toggleStatus(${id}, this.checked)">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewCategory(${id})" title="View">
+                                  
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editCategory(${id})" title="Edit">
+                                   
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${id})" title="Delete">
+                                  
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            $('#categoriesContainer').removeClass('d-none');
+            $('#emptyState').addClass('d-none');
+            renderPagination();
+        }
+
+        function viewCategory(id) {
+            $('#categoryDetailContent').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3 text-muted">Loading...</p>
+                </div>
+            `);
+            $('#viewCategoryModal').modal('show');
+
+            $.ajax({
+                url: `/Category/GetCategoryWithNews/${id}`,
+                method: "GET",
+                success: function(response) {
+                    const category = response.category.data || response.category;
+                    const newsArticles = response.news.data || response.news || [];
+                    const articleCount = Array.isArray(newsArticles) ? newsArticles.length : 0;
+
+                    const html = `
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Category Information</h6>
+                                <p><strong>ID:</strong> ${category.categoryId}</p>
+                                <p><strong>Name:</strong> <span class="badge bg-primary fs-6">${escapeHtml(category.categoryName)}</span></p>
+                                <p><strong>Description:</strong> ${escapeHtml(category.categoryDesciption) || '<em class="text-muted">No description</em>'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Status & Stats</h6>
+                                <p><strong>Status:</strong> ${category.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</p>
+                                <p><strong>Articles:</strong> <span class="badge bg-info fs-6">${articleCount}</span></p>
+                            </div>
+                        </div>
+                        ${articleCount > 0 ? `
+                            <hr>
+                            <h6 class="mb-3">Articles (${articleCount})</h6>
+                            <div class="list-group">
+                                ${newsArticles.map((article, index) => `
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between align-items-start">
+                                            <h6 class="mb-1">${index + 1}. ${escapeHtml(article.newsTitle || 'Untitled')}</h6>
+                                            ${article.newsId ? `<small class="text-muted">ID: ${article.newsId}</small>` : ''}
+                                        </div>
+                                        ${article.newsDescription ? `<p class="mb-1 text-muted small">${escapeHtml(article.newsDescription)}</p>` : ''}
+                                        ${article.createdDate ? `<small class="text-muted"> ${new Date(article.createdDate).toLocaleDateString('en-US')}</small>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="alert alert-info">
+                              
+                                No articles in this category yet
+                            </div>
+                        `}
+                    `;
+                    $('#categoryDetailContent').html(html);
+                },
+                error: function() {
+                    $('#categoryDetailContent').html(`
+                        <div class="alert alert-danger">
+                           
+                            Unable to load category details!
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        function editCategory(id) {
+            $.ajax({
+                url: `/Category/GetCategory/${id}`,
+                method: "GET",
+                success: function(response) {
+                    const category = response.data || response;
+                    isEditMode = true;
+                    $('#modalTitle').text('Edit Category');
+                    $('#categoryId').val(category.categoryId);
+                    $('#categoryName').val(category.categoryName);
+                    $('#categoryDesciption').val(category.categoryDesciption);
+                    $('#parentCategoryId').val(category.parentCategoryId || '');
+                    $('#categoryIsActive').prop('checked', category.isActive);
+                    $('#categoryModal').modal('show');
+                },
+                error: () => alert('Unable to load category!')
+            });
+        }
+
+        function saveCategory() {
+            if (!$('#categoryForm')[0].checkValidity()) {
+                $('#categoryForm')[0].reportValidity();
+                return;
+            }
+
+            const categoryData = {
+                categoryName: $('#categoryName').val().trim(),
+                categoryDesciption: $('#categoryDesciption').val().trim(),
+                parentCategoryId: parseInt($('#parentCategoryId').val()) || null,
+                isActive: $('#categoryIsActive').is(':checked')
+            };
+
+            let url, method;
+            if (isEditMode) {
+                const id = $('#categoryId').val();
+                url = `/Category/UpdateCategory/${id}`;
+                method = "PUT";
+                categoryData.categoryId = parseInt(id);
+            } else {
+                url = '/Category/CreateCategory';
+                method = "POST";
+            }
+
+            $('#saveSpinner').removeClass('d-none');
+            $('#btnSaveCategory').prop('disabled', true);
+
+            $.ajax({
+                url: url,
+                method: method,
+                contentType: 'application/json',
+                data: JSON.stringify(categoryData),
+                success: function() {
+                    $('#categoryModal').modal('hide');
+                    showSuccessToast(isEditMode ? 'Category updated successfully!' : 'Category created successfully!');
+                    loadCategories();
+                },
+                error: function(xhr) {
+                    let msg = 'Unable to save category!';
+                    if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                    else if (xhr.responseJSON?.errors) msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    alert(msg);
+                },
+                complete: function() {
+                    $('#saveSpinner').addClass('d-none');
+                    $('#btnSaveCategory').prop('disabled', false);
+                }
+            });
+        }
+
+        function toggleStatus(id, isActive) {
+            $.ajax({
+                url: `/Category/GetCategory/${id}`,
+                method: 'GET',
+                success: function(response) {
+                    const category = response.data || response;
+                    category.isActive = isActive;
+                    $.ajax({
+                        url: `/Category/UpdateCategory/${id}`,
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(category),
+                        success: () => {
+                            showSuccessToast(`Category ${isActive ? 'activated' : 'deactivated'}`);
+                            loadCategories();
+                        },
+                        error: () => {
+                            alert('Error updating status');
+                            loadCategories();
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteCategory(id) {
+            if (!confirm('Are you sure you want to delete this category? This action cannot be undone!')) return;
+            $.ajax({
+                url: `/Category/DeleteCategory/${id}`,
+                method: "DELETE",
+                success: () => {
+                    showSuccessToast('Category deleted successfully!');
+                    loadCategories();
+                },
+                error: function(xhr) {
+                    let msg = 'Unable to delete category!';
+                    if (xhr.status === 409) msg = 'Cannot delete: category has linked articles';
+                    else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                    alert(msg);
+                }
+            });
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(currentPage * itemsPerPage, totalRecords);
+            $('#showingStart').text(startIndex);
+            $('#showingEnd').text(endIndex);
+            $('#totalRecords').text(totalRecords);
+
+            if (totalPages <= 1) {
+                $('#paginationContainer').addClass('d-none');
+                return;
+            }
+
+            const pagination = $('#pagination');
+            let html = '';
+            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;"></a></li>`;
+
+            const maxPages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+            let endPage = Math.min(totalPages, startPage + maxPages - 1);
+            if (endPage - startPage < maxPages - 1) startPage = Math.max(1, endPage - maxPages + 1);
+
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+                if (startPage > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+            }
+
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;"></a></li>`;
+            pagination.html(html);
+            $('#paginationContainer').removeClass('d-none');
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadCategories();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openCreateModal() { resetForm(); }
+        function resetForm() {
+            isEditMode = false;
+            $('#modalTitle').text('Create New Category');
+            $('#categoryForm')[0].reset();
+            $('#categoryId').val('');
+            $('#categoryIsActive').prop('checked', true);
+        }
+
+        function handleError(xhr, defaultMsg) {
+            let msg = defaultMsg;
+            if (xhr.status === 401) { msg = "Session expired. Please log in again!"; setTimeout(() => window.location.href = '/Auth/Index', 2000); }
+            else if (xhr.status === 403) msg = "Access denied!";
+            else if (xhr.status === 0) msg = "Cannot connect to server!";
+            else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+            showError(msg);
+        }
+
+        function showLoading() { $('#loadingState').removeClass('d-none'); $('#categoriesContainer, #emptyState, #paginationContainer').addClass('d-none'); }
+        function hideLoading() { $('#loadingState').addClass('d-none'); }
+        function showError(message) { $('#errorMessage').text(message); $('#errorState').removeClass('d-none'); }
+        function hideError() { $('#errorState').addClass('d-none'); }
+        function showEmptyState() { $('#categoriesContainer, #paginationContainer').addClass('d-none'); $('#emptyState').removeClass('d-none'); }
+
+        function showSuccessToast(message) {
+            const toastContainer = $('#toastContainer')?.length ? $('#toastContainer') : $('<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>').appendTo('body');
+            const toastId = 'toast_' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            toastContainer.append(toastHtml);
+            const toast = new bootstrap.Toast($(`#${toastId}`)[0], { delay: 3000 });
+            toast.show();
+            $(`#${toastId}`).on('hidden.bs.toast', function() { $(this).remove(); });
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+        }
+    </script>
+}

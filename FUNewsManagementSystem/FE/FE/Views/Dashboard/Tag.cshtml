@@ -1,0 +1,717 @@
+﻿@{
+    ViewData["Title"] = "Tag Management";
+}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Tag Management</h2>
+        <p class="text-muted mb-0">Manage news tags</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tagModal" onclick="openCreateModal()">
+            Create New Tag
+        </button>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <!-- Search icon -->
+                    </span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by tag name or note...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="pageSizeSelect">
+                    <option value="5">5 / page</option>
+                    <option value="10" selected>10 / page</option>
+                    <option value="20">20 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="btnRefresh">
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="loadingState" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading data...</p>
+</div>
+
+<!-- Error State -->
+<div id="errorState" class="alert alert-danger d-none" role="alert">
+    <span id="errorMessage"></span>
+    <button class="btn btn-sm btn-danger ms-3" onclick="loadTags()">
+        Try Again
+    </button>
+</div>
+
+<!-- Empty State -->
+<div id="emptyState" class="text-center py-5 d-none">
+    <p class="mt-3 text-muted">No tags found</p>
+</div>
+
+<!-- Tags Table -->
+<div id="tagsContainer" class="card d-none">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tag Name</th>
+                        <th>Note</th>
+                        <th class="text-center">Number of Posts</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tagsTableBody">
+                    <!-- Table rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4 d-none">
+    <div>
+        <span class="text-muted">Showing <strong id="showingStart">1</strong> - <strong id="showingEnd">10</strong> of <strong id="totalRecords">0</strong> records</span>
+    </div>
+    <nav>
+        <ul class="pagination mb-0" id="pagination">
+            <!-- Pagination will be inserted here -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Create/Edit Tag Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Create New Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tagForm">
+                    <input type="hidden" id="tagId">
+
+                    <div class="mb-3">
+                        <label for="tagName" class="form-label">Tag Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="tagName" required placeholder="Enter tag name...">
+                        <div class="form-text">The tag name will be displayed on articles</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note</label>
+                        <textarea class="form-control" id="note" rows="3" placeholder="Add a note for the tag (optional)..."></textarea>
+                        <div class="form-text">This note is for internal management only</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveTag">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="saveSpinner"></span>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Tag Detail Modal -->
+<div class="modal fade" id="viewTagModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tag Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="tagDetailContent">
+                <!-- Detail content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let totalRecords = 0;
+        let itemsPerPage = 10;
+        let isEditMode = false;
+        let currentSearchTerm = '';
+
+        $(document).ready(function() {
+            loadTags();
+
+            // Search Input with debounce
+            const debouncedSearch = debounce(function() {
+                currentSearchTerm = $('#searchInput').val().trim();
+                currentPage = 1;
+                loadTags();
+            }, 500);
+            $('#searchInput').on('input', debouncedSearch);
+
+            // Page Size Change
+            $('#pageSizeSelect').change(function() {
+                itemsPerPage = parseInt($(this).val());
+                currentPage = 1;
+                loadTags();
+            });
+
+            // Refresh Button
+            $('#btnRefresh').click(function() {
+                currentSearchTerm = '';
+                currentPage = 1;
+                itemsPerPage = 10;
+                $('#searchInput').val('');
+                $('#pageSizeSelect').val('10');
+                loadTags();
+            });
+
+            // Save Tag Button
+            $('#btnSaveTag').click(function() {
+                saveTag();
+            });
+
+            // Reset form when modal is closed
+            $('#tagModal').on('hidden.bs.modal', function() {
+                resetForm();
+            });
+        });
+
+        // Load Tags from API using OData
+        function loadTags() {
+            showLoading();
+            hideError();
+
+            // Build OData query
+            let odataQuery = `$count=true&$skip=${(currentPage - 1) * itemsPerPage}&$top=${itemsPerPage}`;
+
+            // Search filter
+            if (currentSearchTerm) {
+                const escapedTerm = currentSearchTerm.replace(/'/g, "''");
+                odataQuery += `&$filter=(contains(tolower(TagName), '${escapedTerm.toLowerCase()}') or contains(tolower(Note), '${escapedTerm.toLowerCase()}'))`;
+            }
+
+            $.ajax({
+                url: `/Tag/GetTags?odataQuery=${encodeURIComponent(odataQuery)}`,
+                method: "GET",
+                success: function(response) {
+                    console.log('API Response:', response);
+                    hideLoading();
+
+                    const tags = response.value || [];
+                    totalRecords = response['@@odata.count'] || response.count || tags.length;
+
+                    if (tags.length === 0) {
+                        showEmptyState();
+                    } else {
+                        renderTags(tags);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Load tags error:', xhr);
+                    hideLoading();
+                    handleError(xhr, "Unable to load tag list!");
+                }
+            });
+        }
+
+        // Render Tags Table
+        function renderTags(tags) {
+            const tbody = $('#tagsTableBody');
+            if (tags.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            let html = '';
+
+            // Create promises to load article count for each tag
+            const articleCountPromises = tags.map(tag => {
+                const id = tag.TagId || tag.tagId;
+                return $.ajax({
+                    url: `/Tag/GetTagNews?id=${id}`,
+                    method: "GET"
+                }).then(response => {
+                    const newsArticles = response.data || response || [];
+                    return {
+                        id: id,
+                        count: Array.isArray(newsArticles) ? newsArticles.length : 0
+                    };
+                }).catch(() => {
+                    return { id: id, count: 0 };
+                });
+            });
+
+            // Wait for all API calls to complete
+            Promise.all(articleCountPromises).then(articleCounts => {
+                // Create map for fast lookup
+                const countMap = {};
+                articleCounts.forEach(item => {
+                    countMap[item.id] = item.count;
+                });
+
+                // Render table with actual article count
+                tags.forEach(tag => {
+                    const id = tag.TagId || tag.tagId;
+                    const name = tag.TagName || tag.tagName || 'N/A';
+                    const note = tag.Note || tag.note || '';
+                    const articleCount = countMap[id] || 0;
+
+                    html += `
+                        <tr>
+                            <td>${id}</td>
+                            <td>${escapeHtml(name)}</td>
+                            <td>${escapeHtml(note) || '<em>No note</em>'}</td>
+                            <td class="text-center">${articleCount}</td>
+                            <td class="text-center">
+                                <span style="cursor:pointer; text-decoration:underline;" onclick="viewTag(${id})">Detail</span> |
+                                <span style="cursor:pointer; text-decoration:underline;" onclick="editTag(${id})">Edit</span> |
+                                <span style="cursor:pointer; text-decoration:underline; color:red;" onclick="deleteTag(${id})">Delete</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.html(html);
+                $('#tagsContainer').removeClass('d-none');
+                $('#emptyState').addClass('d-none');
+                renderPagination();
+            }).catch(error => {
+                console.error('Error loading article counts:', error);
+                // Fallback: render table with count = 0
+                tags.forEach(tag => {
+                    const id = tag.TagId || tag.tagId;
+                    const name = tag.TagName || tag.tagName || 'N/A';
+                    const note = tag.Note || tag.note || '';
+
+                    html += `
+                        <tr>
+                            <td>${id}</td>
+                            <td>${escapeHtml(name)}</td>
+                            <td>${escapeHtml(note) || '<em>No note</em>'}</td>
+                            <td class="text-center">0</td>
+                            <td class="text-center">
+                                <span style="cursor:pointer; text-decoration:underline;" onclick="viewTag(${id})">Detail</span> |
+                                <span style="cursor:pointer; text-decoration:underline;" onclick="editTag(${id})">Edit</span> |
+                                <span style="cursor:pointer; text-decoration:underline; color:red;" onclick="deleteTag(${id})">Delete</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.html(html);
+                $('#tagsContainer').removeClass('d-none');
+                $('#emptyState').addClass('d-none');
+                renderPagination();
+            });
+        }
+
+        // Render Pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(currentPage * itemsPerPage, totalRecords);
+
+            $('#showingStart').text(startIndex);
+            $('#showingEnd').text(endIndex);
+            $('#totalRecords').text(totalRecords);
+
+            if (totalPages <= 1) {
+                $('#paginationContainer').addClass('d-none');
+                return;
+            }
+
+            const pagination = $('#pagination');
+            let html = '';
+
+            // Previous button
+            html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+
+            // Page numbers
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            if (endPage - startPage < maxPagesToShow - 1) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+                if (startPage > 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+            }
+
+            // Next button
+            html += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+            pagination.html(html);
+            $('#paginationContainer').removeClass('d-none');
+        }
+
+        // Change Page
+        function changePage(page) {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            loadTags();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Open Create Modal
+        function openCreateModal() {
+            resetForm();
+        }
+
+        // View Tag Detail
+        function viewTag(id) {
+            // Show loading in modal
+            $('#tagDetailContent').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading data...</p>
+                </div>
+            `);
+            $('#viewTagModal').modal('show');
+
+            // Get tag info and news articles
+            Promise.all([
+                $.ajax({
+                    url: `/Tag/GetTagById?id=${id}`,
+                    method: "GET"
+                }),
+                $.ajax({
+                    url: `/Tag/GetTagNews?id=${id}`,
+                    method: "GET"
+                })
+            ])
+            .then(([tagResponse, newsResponse]) => {
+                console.log("Tag detail data:", tagResponse);
+                console.log("News articles data:", newsResponse);
+
+                const tag = tagResponse.data || tagResponse;
+                const newsArticles = newsResponse.data || newsResponse || [];
+                const articleCount = Array.isArray(newsArticles) ? newsArticles.length : 0;
+
+                const html = `
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Tag Information</h6>
+                            <p><strong>ID:</strong> ${tag.tagId || tag.TagId}</p>
+                            <p><strong>Tag Name:</strong> <span class="badge bg-primary fs-6">${escapeHtml(tag.tagName || tag.TagName)}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Note</h6>
+                            <p>${escapeHtml(tag.note || tag.Note) || '<em class="text-muted">No note</em>'}</p>
+                            <p><strong>Number of Posts:</strong> <span class="badge bg-info fs-6">${articleCount}</span></p>
+                        </div>
+                    </div>
+                    ${articleCount > 0 ? `
+                        <hr>
+                        <h6 class="mb-3">List of Articles (${articleCount})</h6>
+                        <div class="list-group">
+                            ${newsArticles.map((article, index) => `
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                        <h6 class="mb-1">${index + 1}. ${escapeHtml(article.newsTitle || article.NewsTitle || 'Untitled')}</h6>
+                                        ${article.newsId || article.NewsId ? `<small class="text-muted">ID: ${article.newsId || article.NewsId}</small>` : ''}
+                                    </div>
+                                    ${article.newsDescription || article.NewsDescription ? `
+                                        <p class="mb-1 text-muted small">${escapeHtml(article.newsDescription || article.NewsDescription)}</p>
+                                    ` : ''}
+                                    ${article.createdDate || article.CreatedDate ? `
+                                        <small class="text-muted">
+                                            ${new Date(article.createdDate || article.CreatedDate).toLocaleDateString()}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="alert alert-info">
+                            No articles are using this tag yet
+                        </div>
+                    `}
+                `;
+
+                $('#tagDetailContent').html(html);
+            })
+            .catch((xhr) => {
+                console.error('View tag error:', xhr);
+                $('#tagDetailContent').html(`
+                    <div class="alert alert-danger">
+                        Unable to load tag details!
+                    </div>
+                `);
+            });
+        }
+
+        // Edit Tag
+        function editTag(id) {
+            $.ajax({
+                url: `/Tag/GetTagById?id=${id}`,
+                method: "GET",
+                success: function(response) {
+                    const tag = response.data || response;
+                    console.log("Tag edit data:", tag);
+
+                    isEditMode = true;
+                    $('#modalTitle').text('Edit Tag');
+                    $('#tagId').val(tag.tagId || tag.TagId);
+                    $('#tagName').val(tag.tagName || tag.TagName);
+                    $('#note').val(tag.note || tag.Note || '');
+
+                    $('#tagModal').modal('show');
+                },
+                error: function(xhr) {
+                    console.error('Edit tag error:', xhr);
+                    alert('Unable to load tag information!');
+                }
+            });
+        }
+
+        // Save Tag (Create or Update)
+        function saveTag() {
+            if (!$('#tagForm')[0].checkValidity()) {
+                $('#tagForm')[0].reportValidity();
+                return;
+            }
+
+            const tagData = {
+                tagName: $('#tagName').val().trim(),
+                note: $('#note').val().trim() || null
+            };
+
+            let url = '/Tag/CreateTag';
+            let method = "POST";
+
+            if (isEditMode) {
+                const id = $('#tagId').val();
+                url = `/Tag/UpdateTag?id=${id}`;
+                method = "PUT";
+                tagData.tagId = parseInt(id);
+            }
+
+            // Show loading
+            $('#saveSpinner').removeClass('d-none');
+            $('#btnSaveTag').prop('disabled', true);
+            console.log('Data sent:', tagData);
+
+            $.ajax({
+                url: url,
+                method: method,
+                contentType: 'application/json',
+                data: JSON.stringify(tagData),
+                success: function() {
+                    $('#tagModal').modal('hide');
+                    showSuccessToast(isEditMode ? 'Tag updated successfully!' : 'New tag created successfully!');
+                    loadTags();
+                },
+                error: function(xhr) {
+                    console.error('Save tag error:', xhr);
+                    let errorMsg = 'Unable to save tag!';
+                    if (xhr.responseJSON?.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON?.errors) {
+                        errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    }
+                    alert(errorMsg);
+                },
+                complete: function() {
+                    $('#saveSpinner').addClass('d-none');
+                    $('#btnSaveTag').prop('disabled', false);
+                }
+            });
+        }
+
+        // Delete Tag
+        function deleteTag(id) {
+            if (!confirm('Are you sure you want to delete this tag? This action cannot be undone!')) return;
+
+            $.ajax({
+                url: `/Tag/DeleteTag?id=${id}`,
+                method: "DELETE",
+                success: function() {
+                    showSuccessToast('Tag deleted successfully!');
+                    loadTags();
+                },
+                error: function(xhr) {
+                    console.error('Delete error:', xhr);
+                    let errorMsg = 'Unable to delete tag!';
+                    if (xhr.status === 409) {
+                        errorMsg = 'Cannot delete this tag because it is linked to articles';
+                    } else if (xhr.responseJSON?.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    alert(errorMsg);
+                }
+            });
+        }
+
+        // Reset Form
+        function resetForm() {
+            isEditMode = false;
+            $('#modalTitle').text('Create New Tag');
+            $('#tagForm')[0].reset();
+            $('#tagId').val('');
+        }
+
+        // Error Handler
+        function handleError(xhr, defaultMsg) {
+            let errorMsg = defaultMsg;
+
+            if (xhr.status === 401) {
+                errorMsg = "Your session has expired. Please log in again!";
+                setTimeout(() => {
+                    window.location.href = '/Auth/Index';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                errorMsg = "You do not have permission to access this!";
+            } else if (xhr.status === 0) {
+                errorMsg = "Unable to connect to server!";
+            } else if (xhr.responseJSON?.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+
+            showError(errorMsg);
+        }
+
+        // UI State Functions
+        function showLoading() {
+            $('#loadingState').removeClass('d-none');
+            $('#tagsContainer').addClass('d-none');
+            $('#emptyState').addClass('d-none');
+            $('#paginationContainer').addClass('d-none');
+        }
+
+        function hideLoading() {
+            $('#loadingState').addClass('d-none');
+        }
+
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorState').removeClass('d-none');
+        }
+
+        function hideError() {
+            $('#errorState').addClass('d-none');
+        }
+
+        function showEmptyState() {
+            $('#tagsContainer').addClass('d-none');
+            $('#emptyState').removeClass('d-none');
+            $('#paginationContainer').addClass('d-none');
+        }
+
+        // Success Toast Notification
+        function showSuccessToast(message) {
+            let toastContainer = $('#toastContainer');
+            if (toastContainer.length === 0) {
+                $('body').append(`
+                    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+                    </div>
+                `);
+                toastContainer = $('#toastContainer');
+            }
+
+            const toastId = 'toast_' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                          ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.append(toastHtml);
+            const toastElement = $(`#${toastId}`)[0];
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            $(toastElement).on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+
+        // Utility Functions
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+        }
+    </script>
+}

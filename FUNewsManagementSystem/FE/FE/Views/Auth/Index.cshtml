@@ -1,0 +1,467 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FUNews Management</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ef4444; /* Đỏ chính */
+            --primary-light: #fee2e2; /* Đỏ nhạt */
+            --danger: #dc2626; /* Đỏ đậm */
+            --gray-100: #f8f9fa;
+            --gray-200: #e5e7eb;
+            --gray-600: #6b7280;
+            --gray-800: #1f2937;
+            --white: #ffffff;
+            --border-radius: 16px;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+        
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            margin: 0;
+            color: var(--gray-800);
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .login-header {
+            text-align: center;
+            padding: 2rem 1.5rem 1.5rem;
+            background: var(--primary-light);
+            position: relative;
+        }
+
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
+        }
+
+        .login-header h3 {
+            margin: 0 0 0.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .login-header p {
+            margin: 0;
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .login-body {
+            padding: 1.5rem;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+            .input-wrapper input {
+                width: 100%;
+                padding: 0.75rem 1rem 0.75rem 2.75rem;
+                border: 1.5px solid var(--gray-200);
+                border-radius: 10px;
+                font-size: 1rem;
+                transition: all 0.3s;
+            }
+
+                .input-wrapper input:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+                }
+
+        .input-icon {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-600);
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .form-check-input {
+            margin: 0;
+        }
+
+        .forgot-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+            .forgot-link:hover {
+                text-decoration: underline;
+            }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.85rem;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+            .btn-login:hover {
+                background: #ef4444;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 15px rgba(67, 97, 238, 0.3);
+            }
+
+            .btn-login:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .btn-success {
+            background: var(--success) !important;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+            .divider::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: var(--gray-200);
+            }
+
+            .divider span {
+                background: white;
+                padding: 0 1rem;
+            }
+
+        
+
+        
+
+       
+
+        keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Responsive */
+        media (max-width: 480px) {
+            .login-wrapper
+
+        {
+            padding: 0 0.5rem;
+        }
+
+        .login-header {
+            padding: 1.5rem 1rem 1rem;
+        }
+
+        .login-body {
+            padding: 1.25rem;
+        }
+
+        .btn-login {
+            font-size: 0.95rem;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper fade-in">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-circle">
+                    <i class="bi bi-newspaper"></i>
+                </div>
+                <h3>FUNews Management</h3>
+                <p>Sign in to your account</p>
+            </div>
+
+            <!-- Body -->
+            <div class="login-body">
+                <!-- Error Alert -->
+                <div id="alertError" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <!-- Email -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="bi bi-envelope input-icon"></i>
+                            <input type="email" id="Email" class="form-control" placeholder="Your email" required>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" id="Password" class="form-control" placeholder="Password" required>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-login" id="btnSubmit">
+                        <span class="btn-text">Sign In</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                </form>
+
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Toggle password visibility
+            $('#togglePassword').on('click', function () {
+                const $input = $('#Password');
+                const $icon = $(this).find('i');
+                if ($input.attr('type') === 'password') {
+                    $input.attr('type', 'text');
+                    $icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    $input.attr('type', 'password');
+                    $icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+
+            // Form submit
+            $('#loginForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const email = $('#Email').val().trim();
+                const password = $('#Password').val();
+                const $btn = $('#btnSubmit');
+                const $text = $btn.find('.btn-text');
+                const $spinner = $btn.find('.spinner-border');
+
+                // Validation
+                if (!email || !password) {
+                    showError('Please enter both email and password.');
+                    return;
+                }
+
+                hideError();
+                disableButton($btn, $text, $spinner);
+
+                $.ajax({
+                    url: '/Auth/Login',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ Email: email, Password: password }),
+                    success: function (response) {
+                        let data = response;
+                        if (typeof response === 'string') {
+                            try { data = JSON.parse(response); } catch (e) {
+                                showError('Invalid response from server.');
+                                resetButton($btn, $text, $spinner);
+                                return;
+                            }
+                        }
+
+                        const token = data.data?.token || data.token;
+                        if (token) {
+                            $text.text('Login successful!').removeClass('d-none');
+                            $spinner.addClass('d-none');
+                            $btn.addClass('btn-success');
+
+                            setTimeout(() => {
+                                window.location.href = '/Dashboard/Index';
+                            }, 1000);
+                        } else {
+                            showError('Authentication failed. No token received.');
+                            resetButton($btn, $text, $spinner);
+                        }
+                    },
+                    error: function (xhr) {
+                        let msg = 'Login failed. Please try again.';
+                        try {
+                            let err = xhr.responseText;
+                            if (typeof err === 'string') err = JSON.parse(err);
+
+                            if (xhr.status === 401) msg = 'Invalid email or password.';
+                            else if (xhr.status === 404) msg = 'Account not found.';
+                            else if (xhr.status === 500) msg = err.message || 'Server error.';
+                            else if (xhr.status === 0) msg = 'Cannot connect to server.';
+                            else if (err.message) msg = err.message;
+                        } catch (e) {
+                            if (xhr.status === 0) msg = 'Network error. Check your connection.';
+                        }
+                        showError(msg);
+                        resetButton($btn, $text, $spinner);
+                    }
+                });
+            });
+
+            // Helper functions
+            function showError(message) {
+                $('#errorMessage').text(message);
+                $('#alertError').removeClass('d-none');
+                setTimeout(hideError, 5000);
+            }
+
+            function hideError() {
+                $('#alertError').addClass('d-none');
+            }
+
+            function disableButton($btn, $text, $spinner) {
+                $btn.prop('disabled', true);
+                $text.addClass('d-none');
+                $spinner.removeClass('d-none');
+            }
+
+            function resetButton($btn, $text, $spinner) {
+                setTimeout(() => {
+                    $btn.prop('disabled', false).removeClass('btn-success');
+                    $text.removeClass('d-none').text('Sign In');
+                    $spinner.addClass('d-none');
+                }, 300);
+            }
+
+            // Enter key support
+            $('#Email, #Password').on('keypress', function (e) {
+                if (e.which === 13) $('#loginForm').submit();
+            });
+        });
+    </script>
+</body>
+</html>

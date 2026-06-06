@@ -1,0 +1,416 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var token = HttpContextAccessor.HttpContext.Session.GetString("AuthToken");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FUNews Management</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    @* <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> *@
+    <link rel="stylesheet" href="~/FE.styles.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav d-flex align-items-center justify-content-between bg-white border-bottom px-3 py-2">
+        <div class="d-flex align-items-center gap-4">
+            <a href="@Url.Action("Index", "Dashboard")" class="d-flex align-items-center gap-2 text-dark text-decoration-none">
+                <i class="bi bi-book text-dark"></i>
+                <div class="lh-sm">
+                    <div class="fw-semibold">FUNews</div>
+                    <small class="text-muted">Management System</small>
+                </div>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="d-none d-lg-flex gap-1">
+                <a href="@Url.Action("Index", "Dashboard")" class="btn btn-sm btn-outline-secondary">Dashboard</a>
+                <a href="@Url.Action("News", "Dashboard")" class="btn btn-sm btn-outline-secondary">News</a>
+                <a href="@Url.Action("Category", "Dashboard")" class="btn btn-sm btn-outline-secondary">Categories</a>
+                <a href="@Url.Action("Tag", "Dashboard")" class="btn btn-sm btn-outline-secondary">Tags</a>
+                <a href="@Url.Action("SystemAccounts", "Dashboard")" class="btn btn-sm btn-outline-secondary">Users</a>
+                <a href="@Url.Action("AuditLog", "Dashboard")" class="btn btn-sm btn-outline-secondary">Audit Log</a>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Search -->
+            <div class="input-group input-group-sm d-none d-md-flex">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Search...">
+            </div>
+
+            <!-- Notifications -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary position-relative" data-bs-toggle="dropdown" id="notificationBtn">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge bg-dark rounded-pill position-absolute top-0 start-100 translate-middle px-1 py-0"
+                          id="notificationCount" style="display: none; font-size: 0.65rem;">0</span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end p-0" id="notificationDropdown">
+                    <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <strong>Notifications</strong>
+                        <button class="btn btn-sm btn-link text-muted p-0" id="markAllReadBtn">Mark all as read</button>
+                    </li>
+                    <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
+                    <li class="text-center py-4 text-muted">
+                        <i class="bi bi-bell-slash fs-4 d-block mb-1"></i>
+                        No notifications
+                    </li>
+            </div>
+            </ul>
+        </div>
+        </div>
+    </nav>
+
+
+            <!-- Mobile Menu Toggle -->
+            <button class="btn-icon d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                
+            </button>
+
+            <!-- User -->
+            <div class="dropdown">
+                <a class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=4361ee&color=fff" alt="User" width="36" height="36" class="rounded-circle">
+                    <div class="ms-2 d-none d-sm-block text-start">
+                        <div class="fw-semibold small">Admin User</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">Administrator</div>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="@Url.Action("Profile", "Account")">Profile</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("Settings", "Account")">Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Offcanvas Menu -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <a href="@Url.Action("Index", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">Dashboard</a>
+            <a href="@Url.Action("News", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">News</a>
+            <a href="@Url.Action("Category", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">Categories</a>
+            <a href="@Url.Action("Tag", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">Tags</a>
+            <a href="@Url.Action("SystemAccounts", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">Users</a>
+            <a href="@Url.Action("AuditLog", "Dashboard")" class="d-block py-2 px-3 text-decoration-none">Audit Log</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Home</a></li>
+                        <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="content-card fade-in">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- News Detail Modal -->
+    <div class="modal fade" id="newsDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Loading...</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-3">Loading news...</p>
+                        </div>
+                    </div>
+                    <div id="relatedNewsSection" style="display: none; margin-top: 2rem;">
+                        <h5>Related News</h5>
+                        <div id="relatedNewsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        const token = '@token';
+        const API_BASE = 'https://localhost:7135/api';
+        let currentNewsModal = null;
+
+        // Notification Manager (unchanged logic, updated UI)
+        const NotificationManager = {
+            connection: null,
+            notifications: [],
+            init() {
+                this.setupSignalR();
+                this.loadRecentNotifications();
+                this.setupEventHandlers();
+            },
+            setupSignalR() {
+                this.connection = new signalR.HubConnectionBuilder()
+                    .withUrl("https://localhost:7135/hubs/notifications", {
+                        accessTokenFactory: () => token
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                this.connection.on("ReceiveNotification", (notification) => {
+                    this.handleNewNotification(notification);
+                });
+
+                this.connection.start()
+                    .then(() => console.log("SignalR Connected"))
+                    .catch(err => console.error("SignalR Error:", err));
+            },
+            async loadRecentNotifications() {
+                try {
+                    const response = await fetch(`${API_BASE}/Notification/recent?count=10`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        this.notifications = result.data;
+                        this.renderNotifications();
+                        this.updateBadgeCount();
+                    }
+                } catch (error) {
+                    console.error("Load notifications error:", error);
+                }
+            },
+            handleNewNotification(notification) {
+                this.notifications.unshift(notification);
+                if (this.notifications.length > 10) this.notifications.pop();
+                this.showToast(notification);
+                this.renderNotifications();
+                this.updateBadgeCount();
+                this.playNotificationSound();
+            },
+            showToast(notification) {
+                const toast = `
+                    <div class="toast custom-toast" role="alert">
+                        <div class="toast-header">
+                            <i class="bi bi-bell-fill me-2"></i>
+                            <strong class="me-auto">${notification.title}</strong>
+                            <small>${notification.timeAgo || 'Just now'}</small>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${notification.message}
+                            ${notification.relatedId ? '<br><small class="text-primary" style="cursor:pointer;" onclick="NotificationManager.showNewsFromToast(\'' + notification.id + '\', \'' + notification.relatedId + '\')">View details</small>' : ''}
+                        </div>
+                    </div>`;
+                $('#toastContainer').append(toast);
+                $('.toast').toast({ delay: 5000 }).toast('show');
+            },
+            async showNewsFromToast(nid, aid) {
+                await this.markAsRead(nid);
+                showNewsDetail(aid);
+            },
+            renderNotifications() {
+                const $list = $('#notificationList');
+                if (!this.notifications.length) {
+                    $list.html(`<li class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-4 d-block mb-2"></i>No notifications</li>`);
+                    return;
+                }
+                const html = this.notifications.map(n => `
+                    <li class="notification-item ${!n.isRead ? 'unread' : ''}"
+                        data-notification-id="${n.id}" data-article-id="${n.relatedId || ''}">
+                        <div class="d-flex">
+                            ${!n.isRead ? '<span class="notification-dot"></span>' : '<span style="width:16px"></span>'}
+                            <div class="flex-grow-1">
+                                <strong>${n.title}</strong>
+                                <p class="mb-1 small text-muted">${n.message}</p>
+                                <small class="text-muted">${n.timeAgo || ''}</small>
+                            </div>
+                        </div>
+                    </li>`).join('');
+                $list.html(html);
+            },
+            updateBadgeCount() {
+                const count = this.notifications.filter(n => !n.isRead).length;
+                const $badge = $('#notificationCount');
+                count > 0 ? $badge.text(count).show() : $badge.hide();
+            },
+            async markAsRead(id) {
+                try {
+                    await fetch(`${API_BASE}/Notification/${id}/read`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const n = this.notifications.find(x => x.id === id);
+                    if (n) { n.isRead = true; this.renderNotifications(); this.updateBadgeCount(); }
+                } catch (e) { console.error(e); }
+            },
+            async markAllAsRead() {
+                try {
+                    await fetch(`${API_BASE}/Notification/read-all`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    this.notifications.forEach(n => n.isRead = true);
+                    this.renderNotifications();
+                    this.updateBadgeCount();
+                } catch (e) { console.error(e); }
+            },
+            setupEventHandlers() {
+                $(document).on('click', '.notification-item', async function(e) {
+                    e.preventDefault();
+                    const nid = $(this).data('notification-id');
+                    const aid = $(this).data('article-id');
+                    await NotificationManager.markAsRead(nid);
+                    if (aid) showNewsDetail(aid);
+                    bootstrap.Dropdown.getInstance($('#notificationBtn')[0])?.hide();
+                });
+                $('#markAllReadBtn').on('click', () => this.markAllAsRead());
+            },
+            playNotificationSound() {
+                try {
+                    new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyCz/LZiTYIG2S77OihUBELTKXh8bllHAU2jdXyy3goBS19yPDcjT4IEly06+ujUxEKRp/g8sFuIQU=')
+                        .play().catch(() => {});
+                } catch (e) {}
+            }
+        };
+
+        // News Modal Functions (same logic, updated UI)
+        async function showNewsDetail(newsId) {
+            $('#modalTitle').text('Loading...');
+            $('#modalContent').html(`<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3">Loading news...</p></div>`);
+            $('#relatedNewsSection').hide();
+
+            currentNewsModal = new bootstrap.Modal('#newsDetailModal');
+            currentNewsModal.show();
+
+            try {
+                const res = await fetch(`${API_BASE}/NewsArticle/${newsId}?$expand=Category,CreatedBy,Tags`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load news');
+
+                const data = await res.json();
+                let news = data.data || data;
+
+                // Normalize
+                const n = {
+                    id: news.newsArticleId || news.NewsArticleId,
+                    title: news.newsTitle || news.NewsTitle,
+                    headline: news.headline || news.Headline,
+                    content: news.newsContent || news.NewsContent,
+                    source: news.newsSource || news.NewsSource,
+                    date: news.createdDate || news.CreatedDate,
+                    category: news.category || news.Category,
+                    author: news.createdBy || news.CreatedBy,
+                    tags: news.tags || news.Tags || []
+                };
+
+                const date = new Date(n.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const tags = n.tags.map(t => `<span class="badge-tag">${t.tagName || t.TagName}</span>`).join(' ');
+                const cat = n.category ? (n.category.categoryName || n.category.CategoryName) : 'N/A';
+                const author = n.author ? (n.author.accountName || n.author.AccountName) : 'Unknown';
+
+                $('#modalTitle').text(n.title);
+                $('#modalContent').html(`
+                    <div class="news-headline fw-semibold text-muted mb-3">${n.headline}</div>
+                    <div class="news-meta d-flex flex-wrap gap-3 mb-3">
+                        <span></i> ${cat}</span>
+                        <span></i> ${author}</span>
+                        <span></i> ${date}</span>
+                        <span></i> ${n.source || 'N/A'}</span>
+                    </div>
+                    ${tags ? `<div class="mb-3">${tags}</div>` : ''}
+                    <div style="line-height: 1.8;">${n.content}</div>
+                `);
+
+                loadRelatedNews(n);
+            } catch (err) {
+                $('#modalTitle').text('Error');
+                $('#modalContent').html(`<div class="alert alert-danger">Failed to load news: ${err.message}</div>`);
+            }
+        }
+
+        async function loadRelatedNews(current) {
+            try {
+                const res = await fetch(`${API_BASE}/ActiveNews?$expand=Category,CreatedBy&$filter=NewsStatus eq true&$top=3&$orderby=CreatedDate desc`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const related = (data.value || data.data || []).filter(x => (x.NewsArticleId || x.newsArticleId) !== current.id);
+
+                if (related.length > 0) {
+                    const html = related.map(n => {
+                        const date = new Date(n.CreatedDate || n.createdDate).toLocaleDateString('en-US');
+                        const title = n.NewsTitle || n.newsTitle;
+                        const cat = (n.Category || n.category)?.CategoryName || 'N/A';
+                        const id = n.NewsArticleId || n.newsArticleId;
+                        return `<div class="related-news-item" onclick="showNewsDetail('${id}')">
+                            <div class="fw-semibold mb-1">${title}</div>
+                            <div class="small text-muted"> ${cat} |  ${date}</div>
+                        </div>`;
+                    }).join('');
+                    $('#relatedNewsList').html(html);
+                    $('#relatedNewsSection').show();
+                } else {
+                    $('#relatedNewsSection').hide();
+                }
+            } catch (e) {
+                $('#relatedNewsSection').hide();
+            }
+        }
+
+        $(document).ready(() => {
+            NotificationManager.init();
+        });
+
+        $('#logoutBtn').click(function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to log out?')) {
+                document.cookie = 'AuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                window.location.href = '@Url.Action("Index", "Auth")';
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+<style>
+    .btn, .btn:hover, .btn:focus {
+        background: none !important;
+        border: 1px solid #ccc !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    a.nav-link, a.btn {
+        color: black !important;
+    }
+</style>
+
+</html>

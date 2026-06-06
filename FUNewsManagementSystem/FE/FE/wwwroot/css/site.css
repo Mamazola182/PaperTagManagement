@@ -1,0 +1,434 @@
+﻿/* ============================================
+   Dashboard Layout Styles
+   ============================================ */
+
+:root {
+    --sidebar-width: 260px;
+    --topbar-height: 60px;
+    --primary-color: #0d6efd;
+    --sidebar-bg: #1a1d29;
+    --sidebar-hover: #2a2d3a;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* ============================================
+   Sidebar Styles
+   ============================================ */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    padding: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+    .sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+    }
+
+.sidebar-brand {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+    .sidebar-brand h4 {
+        color: #fff;
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .sidebar-brand small {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.75rem;
+    }
+
+.sidebar-menu {
+    padding: 20px 0;
+}
+
+.sidebar-menu-item {
+    margin-bottom: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+    .sidebar-link:hover {
+        background: var(--sidebar-hover);
+        color: #fff;
+        padding-left: 25px;
+    }
+
+    .sidebar-link.active {
+        background: var(--primary-color);
+        color: #fff;
+    }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #fff;
+        }
+
+    .sidebar-link i {
+        font-size: 1.2rem;
+        width: 30px;
+    }
+
+    .sidebar-link span {
+        font-size: 0.95rem;
+    }
+
+    .sidebar-link .badge {
+        margin-left: auto;
+    }
+
+/* ============================================
+   Topbar Styles
+   ============================================ */
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--topbar-height);
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.topbar-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    margin-right: 20px;
+}
+
+    .topbar-toggle:hover {
+        color: var(--primary-color);
+    }
+
+.topbar-search {
+    flex: 1;
+    max-width: 400px;
+    margin-right: auto;
+}
+
+    .topbar-search input {
+        border-radius: 20px;
+        border: 1px solid #e0e0e0;
+        padding: 8px 20px;
+        width: 100%;
+    }
+
+        .topbar-search input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+        }
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.topbar-icon {
+    position: relative;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+    .topbar-icon:hover {
+        color: var(--primary-color);
+    }
+
+    .topbar-icon .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 0.7rem;
+    }
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+    .topbar-user:hover {
+        background-color: #f8f9fa;
+    }
+
+    .topbar-user img {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e0e0e0;
+    }
+
+.topbar-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar-user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.topbar-user-role {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--topbar-height);
+    padding: 30px;
+    min-height: calc(100vh - var(--topbar-height));
+    transition: all 0.3s ease;
+}
+
+/* ============================================
+   Sidebar Toggle States
+   ============================================ */
+
+body.sidebar-collapsed .sidebar {
+    width: 70px;
+}
+
+body.sidebar-collapsed .sidebar-brand h4,
+body.sidebar-collapsed .sidebar-brand small,
+body.sidebar-collapsed .sidebar-link span,
+body.sidebar-collapsed .sidebar-link .badge {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-link {
+    justify-content: center;
+    padding-left: 20px;
+}
+
+    body.sidebar-collapsed .sidebar-link:hover {
+        padding-left: 20px;
+    }
+
+body.sidebar-collapsed .topbar {
+    left: 70px;
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: 70px;
+}
+
+/* ============================================
+   Dropdown Menu
+   ============================================ */
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+}
+
+.dropdown-item {
+    padding: 10px 20px;
+    transition: background-color 0.2s;
+}
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .dropdown-item i {
+        width: 20px;
+    }
+
+.dropdown-header {
+    font-weight: 600;
+    color: #333;
+    padding: 12px 20px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    body.sidebar-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+
+    /* Overlay khi mở sidebar trên mobile */
+    body.sidebar-open::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+
+    .topbar {
+        left: 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .topbar-search {
+        display: none;
+    }
+
+    .topbar-user-info {
+        display: none;
+    }
+
+    .topbar-actions {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 15px;
+    }
+
+    .topbar {
+        padding: 0 15px;
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    border-radius: 10px;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+}
+
+.btn {
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 500;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    .table thead th {
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+/* ============================================
+   Animation
+   ============================================ */
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.main-content > * {
+    animation: slideIn 0.3s ease;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+    .sidebar,
+    .topbar {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+        margin-top: 0;
+    }
+}

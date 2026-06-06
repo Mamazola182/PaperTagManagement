@@ -1,0 +1,871 @@
+﻿@{
+    ViewData["Title"] = "User Management";
+}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">User Management</h2>
+        <p class="text-muted mb-0">List of all system accounts</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+            Create New Account
+        </button>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <!-- Search icon can be added here if needed -->
+                    </span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name or email...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="roleFilter">
+                    <option value="">All</option>
+                    <option value="1">Staff</option>
+                    <option value="2">Lecturer</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="pageSizeSelect">
+                    <option value="5">5 / page</option>
+                    <option value="10" selected>10 / page</option>
+                    <option value="20">20 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="btnRefresh">
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="loadingState" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading data...</p>
+</div>
+
+<!-- Error State -->
+<div id="errorState" class="alert alert-danger d-none" role="alert">
+    <span id="errorMessage"></span>
+    <button class="btn btn-sm btn-danger ms-3" onclick="loadAccounts()">
+        Try Again
+    </button>
+</div>
+
+<!-- Empty State -->
+<div id="emptyState" class="text-center py-5 d-none">
+    <p class="mt-3 text-muted">No accounts found</p>
+</div>
+
+<!-- Accounts Table -->
+<div id="accountsContainer" class="card d-none">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Account Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Number of Posts</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="accountsTableBody">
+                    <!-- Table rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4 d-none">
+    <div>
+        <span class="text-muted">Showing <strong id="showingStart">1</strong> - <strong id="showingEnd">10</strong> of <strong id="totalRecords">0</strong> records</span>
+    </div>
+    <nav>
+        <ul class="pagination mb-0" id="pagination">
+            <!-- Pagination will be inserted here -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Create/Edit Account Modal -->
+<div class="modal fade" id="createAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Create New Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="accountForm">
+                    <input type="hidden" id="accountId">
+
+                    <div class="mb-3">
+                        <label for="accountName" class="form-label">Account Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="accountName" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="accountEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="accountEmail" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="accountRole" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="accountRole" required>
+                            <option value="">-- Select Role --</option>
+                            <option value="1">Staff</option>
+                            <option value="2">Lecturer</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="passwordField">
+                        <label for="accountPassword" class="form-label">Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="accountPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <!-- Eye icon will be handled in JS -->
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveAccount">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="saveSpinner"></span>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <input type="hidden" id="changePasswordAccountId">
+
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="currentPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleCurrentPassword">
+                                <!-- Eye icon -->
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
+                                <!-- Eye icon -->
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                <!-- Eye icon -->
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnChangePassword">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="changePasswordSpinner"></span>
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Account Detail Modal -->
+<div class="modal fade" id="viewAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Account Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="accountDetailContent">
+                <!-- Detail content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let totalRecords = 0;
+        let itemsPerPage = 10;
+        let isEditMode = false;
+        let currentSearchTerm = '';
+        let currentRoleFilter = '';
+
+        $(document).ready(function() {
+            loadAccounts();
+
+            // Search Input with debounce
+            const debouncedSearch = debounce(function() {
+                currentSearchTerm = $('#searchInput').val().trim();
+                currentPage = 1;
+                loadAccounts();
+            }, 500);
+            $('#searchInput').on('input', debouncedSearch);
+
+            // Role Filter
+            $('#roleFilter').change(function() {
+                currentRoleFilter = $(this).val();
+                currentPage = 1;
+                loadAccounts();
+            });
+
+            // Page Size Change
+            $('#pageSizeSelect').change(function() {
+                itemsPerPage = parseInt($(this).val());
+                currentPage = 1;
+                loadAccounts();
+            });
+
+            // Refresh Button
+            $('#btnRefresh').click(function() {
+                currentSearchTerm = '';
+                currentRoleFilter = '';
+                currentPage = 1;
+                itemsPerPage = 10;
+                $('#searchInput').val('');
+                $('#roleFilter').val('');
+                $('#pageSizeSelect').val('10');
+                loadAccounts();
+            });
+
+            // Save Account Button
+            $('#btnSaveAccount').click(function() {
+                saveAccount();
+            });
+
+            // Change Password Button
+            $('#btnChangePassword').click(function() {
+                changePassword();
+            });
+
+            // Reset form when modal is closed
+            $('#createAccountModal').on('hidden.bs.modal', function() {
+                resetForm();
+            });
+
+            $('#changePasswordModal').on('hidden.bs.modal', function() {
+                resetPasswordForm();
+            });
+
+            // Toggle password visibility
+            setupPasswordToggle('#togglePassword', '#accountPassword');
+            setupPasswordToggle('#toggleCurrentPassword', '#currentPassword');
+            setupPasswordToggle('#toggleNewPassword', '#newPassword');
+            setupPasswordToggle('#toggleConfirmPassword', '#confirmPassword');
+        });
+
+        // Setup Password Toggle
+        function setupPasswordToggle(buttonSelector, inputSelector) {
+            $(buttonSelector).click(function() {
+                const input = $(inputSelector);
+                const icon = $(this).find('i');
+
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+        }
+
+        // Load Accounts - Call Controller
+        function loadAccounts() {
+            showLoading();
+            hideError();
+
+            const skip = (currentPage - 1) * itemsPerPage;
+            const params = {
+                skip: skip,
+                top: itemsPerPage,
+                search: currentSearchTerm,
+                roleFilter: currentRoleFilter || null
+            };
+
+            $.ajax({
+                url: '/SystemAccount/GetAccounts',
+                method: "GET",
+                data: params,
+                success: function(response) {
+                    console.log('API Response:', response);
+                    hideLoading();
+
+                    // OData response structure
+                    const accounts = response.value || response.data || [];
+                    totalRecords = response['@@odata.count'] || response.count || accounts.length;
+
+                    if (accounts.length === 0) {
+                        showEmptyState();
+                    } else {
+                        renderAccounts(accounts);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Load accounts error:', xhr);
+                    hideLoading();
+                    handleError(xhr, "Unable to load account list!");
+                }
+            });
+        }
+
+        // Render Accounts Table
+        function renderAccounts(accounts) {
+            const tbody = $('#accountsTableBody');
+
+            if (accounts.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            let html = '';
+            accounts.forEach(account => {
+                const id = account.accountId || account.AccountId;
+                const name = account.accountName || account.AccountName || 'N/A';
+                const email = account.accountEmail || account.AccountEmail || 'N/A';
+                const role = account.accountRole || account.AccountRole;
+                const roleBadge = getRoleBadge(role);
+                const newsArticles = account.newsArticles || account.NewsArticles || [];
+                const articleCount = newsArticles.length;
+
+                html += `
+                    <tr>
+                        <td>${id}</td>
+                        <td>${name}</td>
+                        <td>${email}</td>
+                        <td>${roleBadge}</td>
+                        <td>
+                            <span class="badge bg-info">${articleCount} posts</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewAccount(${id})" title="View Details">
+                                    <!-- View icon -->
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editAccount(${id})" title="Edit">
+                                    <!-- Edit icon -->
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="openChangePassword(${id})" title="Change Password">
+                                    <!-- Key icon -->
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${id})" title="Delete">
+                                    <!-- Trash icon -->
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.html(html);
+            $('#accountsContainer').removeClass('d-none');
+            $('#emptyState').addClass('d-none');
+
+            renderPagination();
+        }
+
+        // Render Pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(currentPage * itemsPerPage, totalRecords);
+
+            // Update showing info
+            $('#showingStart').text(startIndex);
+            $('#showingEnd').text(endIndex);
+            $('#totalRecords').text(totalRecords);
+
+            if (totalPages <= 1) {
+                $('#paginationContainer').addClass('d-none');
+                return;
+            }
+
+            const pagination = $('#pagination');
+            let html = '';
+
+            // Previous button
+            html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+
+            // Page numbers
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            if (endPage - startPage < maxPagesToShow - 1) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            if (startPage > 1) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+                    </li>
+                `;
+                if (startPage > 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>
+                    </li>
+                `;
+            }
+
+            // Next button
+            html += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+            pagination.html(html);
+            $('#paginationContainer').removeClass('d-none');
+        }
+
+        // Change Page
+        function changePage(page) {
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            loadAccounts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Get Role Badge
+        function getRoleBadge(role) {
+            const badges = {
+                1: '<span class="badge bg-primary">Staff</span>',
+                2: '<span class="badge bg-success">Lecturer</span>'
+            };
+            return badges[role] || '<span class="badge bg-secondary">Unknown</span>';
+        }
+
+        // Get Role Name
+        function getRoleName(role) {
+            const roles = {
+                1: 'Staff',
+                2: 'Lecturer'
+            };
+            return roles[role] || 'Unknown';
+        }
+
+        // View Account Detail
+        function viewAccount(id) {
+            $.ajax({
+                url: `/SystemAccount/GetAccountDetail?id=${id}`,
+                method: "GET",
+                success: function(response) {
+                    const account = response.data || response;
+                    const newsArticles = account.newsArticles || account.NewsArticles || [];
+                    const articleCount = newsArticles.length;
+
+                    const html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID:</strong> ${account.accountId}</p>
+                                <p><strong>Account Name:</strong> ${account.accountName}</p>
+                                <p><strong>Email:</strong> ${account.accountEmail}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Role:</strong> ${getRoleBadge(account.accountRole)}</p>
+                                <p><strong>Number of Posts:</strong> <span class="badge bg-info">${articleCount}</span></p>
+                            </div>
+                        </div>
+                        ${articleCount > 0 ? `
+                            <hr>
+                            <h6>List of Articles:</h6>
+                            <ul class="list-group">
+                                ${newsArticles.map(article => `
+                                    <li class="list-group-item">
+                                        ${article.newsTitle || article.NewsTitle || 'Untitled'}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+                    `;
+
+                    $('#accountDetailContent').html(html);
+                    $('#viewAccountModal').modal('show');
+                },
+                error: function(xhr) {
+                    console.error('View account error:', xhr);
+                    alert('Unable to view account details!');
+                }
+            });
+        }
+
+        // Edit Account
+        function editAccount(id) {
+            $.ajax({
+                url: `/SystemAccount/GetAccountDetail?id=${id}`,
+                method: "GET",
+                success: function(response) {
+                    const account = response.data || response;
+                    isEditMode = true;
+                    $('#modalTitle').text('Edit Account');
+                    $('#accountId').val(account.accountId);
+                    $('#accountName').val(account.accountName);
+                    $('#accountEmail').val(account.accountEmail);
+                    $('#accountRole').val(account.accountRole);
+                    $('#passwordField').hide();
+                    $('#accountPassword').prop('required', false);
+
+                    $('#createAccountModal').modal('show');
+                },
+                error: function(xhr) {
+                    console.error('Edit account error:', xhr);
+                    alert('Unable to load account information!');
+                }
+            });
+        }
+
+        // Save Account (Create or Update)
+        function saveAccount() {
+            if (!$('#accountForm')[0].checkValidity()) {
+                $('#accountForm')[0].reportValidity();
+                return;
+            }
+
+            const accountData = {
+                accountName: $('#accountName').val().trim(),
+                accountEmail: $('#accountEmail').val().trim(),
+                accountRole: parseInt($('#accountRole').val())
+            };
+
+            if (!isEditMode) {
+                const password = $('#accountPassword').val();
+                if (password) {
+                    accountData.accountPassword = password;
+                }
+            } else {
+                accountData.accountId = parseInt($('#accountId').val());
+            }
+
+            // Show loading
+            $('#saveSpinner').removeClass('d-none');
+            $('#btnSaveAccount').prop('disabled', true);
+
+            const url = isEditMode ? `/SystemAccount/UpdateAccount?id=${accountData.accountId}` : '/SystemAccount/CreateAccount';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                method: method,
+                contentType: 'application/json',
+                data: JSON.stringify(accountData),
+                success: function() {
+                    $('#createAccountModal').modal('hide');
+                    showSuccessToast(isEditMode ? 'Account updated successfully!' : 'New account created successfully!');
+                    loadAccounts();
+                },
+                error: function(xhr) {
+                    console.error('Save account error:', xhr);
+                    let errorMsg = 'Unable to save account!';
+
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.error) {
+                            errorMsg = response.error;
+                        } else if (response.errors) {
+                            errorMsg = Object.values(response.errors).flat().join('\n');
+                        }
+                    } catch (e) {
+                        // Keep default error message
+                    }
+
+                    alert(errorMsg);
+                },
+                complete: function() {
+                    $('#saveSpinner').addClass('d-none');
+                    $('#btnSaveAccount').prop('disabled', false);
+                }
+            });
+        }
+
+        // Open Change Password Modal
+        function openChangePassword(id) {
+            $('#changePasswordAccountId').val(id);
+            $('#changePasswordModal').modal('show');
+        }
+
+        // Change Password
+        function changePassword() {
+            if (!$('#passwordForm')[0].checkValidity()) {
+                $('#passwordForm')[0].reportValidity();
+                return;
+            }
+
+            const accountId = $('#changePasswordAccountId').val();
+            const passwordData = {
+                oldPassword: $('#currentPassword').val(),
+                newPassword: $('#newPassword').val(),
+                confirmPassword: $('#confirmPassword').val()
+            };
+
+            // Show loading
+            $('#changePasswordSpinner').removeClass('d-none');
+            $('#btnChangePassword').prop('disabled', true);
+
+            $.ajax({
+                url: `/SystemAccount/ChangePassword?id=${accountId}`,
+                method: "PUT",
+                contentType: 'application/json',
+                data: JSON.stringify(passwordData),
+                success: function(res) {
+                    $('#changePasswordModal').modal('hide');
+                    showSuccessToast('Password changed successfully!');
+                    console.log('Response:', res);
+                },
+                error: function(xhr) {
+                    console.error('Change password error:', xhr);
+                    let errorMsg = 'Unable to change password!';
+
+                    if (xhr.status === 400) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMsg = response.error || 'Current password is incorrect or confirmation does not match.';
+                        } catch (e) {
+                            errorMsg = 'Current password is incorrect or confirmation does not match.';
+                        }
+                    } else if (xhr.status === 404) {
+                        errorMsg = 'Account not found.';
+                    }
+
+                    alert(errorMsg);
+                },
+                complete: function() {
+                    $('#changePasswordSpinner').addClass('d-none');
+                    $('#btnChangePassword').prop('disabled', false);
+                }
+            });
+        }
+
+        // Delete Account
+        function deleteAccount(id) {
+            if (!confirm('Are you sure you want to delete this account? This action cannot be undone!')) return;
+
+            $.ajax({
+                url: `/SystemAccount/DeleteAccount?id=${id}`,
+                method: "DELETE",
+                success: function() {
+                    showSuccessToast('Account deleted successfully!');
+                    loadAccounts();
+                },
+                error: function(xhr) {
+                    console.error('Delete error:', xhr);
+                    let errorMsg = 'Unable to delete account!';
+
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.error) {
+                            errorMsg = response.error;
+                        }
+                    } catch (e) {
+                        // Keep default error message
+                    }
+
+                    alert(errorMsg);
+                }
+            });
+        }
+
+        // Reset Form
+        function resetForm() {
+            isEditMode = false;
+            $('#modalTitle').text('Create New Account');
+            $('#accountForm')[0].reset();
+            $('#accountId').val('');
+            $('#passwordField').show();
+            $('#accountPassword').prop('required', true);
+
+            // Reset password visibility
+            $('#accountPassword').attr('type', 'password');
+            $('#togglePassword i').removeClass('bi-eye-slash').addClass('bi-eye');
+        }
+
+        // Reset Password Form
+        function resetPasswordForm() {
+            $('#passwordForm')[0].reset();
+            $('#changePasswordAccountId').val('');
+
+            // Reset password visibility
+            $('#currentPassword, #newPassword, #confirmPassword').attr('type', 'password');
+            $('#toggleCurrentPassword i, #toggleNewPassword i, #toggleConfirmPassword i')
+                .removeClass('bi-eye-slash').addClass('bi-eye');
+        }
+
+        // Error Handler
+        function handleError(xhr, defaultMsg) {
+            let errorMsg = defaultMsg;
+
+            if (xhr.status === 401) {
+                errorMsg = "Your session has expired. Please log in again!";
+                setTimeout(() => {
+                    window.location.href = '/Auth/Index';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                errorMsg = "You do not have permission to access this!";
+            } else {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMsg = response.message;
+                    }
+                } catch (e) {
+                    // Keep default error message
+                }
+            }
+
+            showError(errorMsg);
+        }
+
+        // UI State Functions
+        function showLoading() {
+            $('#loadingState').removeClass('d-none');
+            $('#accountsContainer').addClass('d-none');
+            $('#emptyState').addClass('d-none');
+            $('#paginationContainer').addClass('d-none');
+        }
+
+        function hideLoading() {
+            $('#loadingState').addClass('d-none');
+        }
+
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorState').removeClass('d-none');
+        }
+
+        function hideError() {
+            $('#errorState').addClass('d-none');
+        }
+
+        function showEmptyState() {
+            $('#accountsContainer').addClass('d-none');
+            $('#emptyState').removeClass('d-none');
+            $('#paginationContainer').addClass('d-none');
+        }
+
+        // Success Toast Notification
+        function showSuccessToast(message) {
+            // Create toast container if it doesn't exist
+            let toastContainer = $('#toastContainer');
+            if (toastContainer.length === 0) {
+                $('body').append(`
+                    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+                    </div>
+                `);
+                toastContainer = $('#toastContainer');
+            }
+
+            const toastId = 'toast_' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                          ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.append(toastHtml);
+            const toastElement = $(`#${toastId}`)[0];
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            // Remove toast after it's hidden
+            $(toastElement).on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+
+        // Utility Functions
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+}

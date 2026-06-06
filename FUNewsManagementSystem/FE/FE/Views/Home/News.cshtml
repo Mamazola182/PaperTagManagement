@@ -1,0 +1,602 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FU News - Public Search (Offline Support)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Offline Banner -->
+    <div class="offline-banner" id="offlineBanner">
+        <i class="fas fa-wifi-slash"></i> You are offline. Viewing cached data from: <span id="lastUpdateTime">N/A</span>
+    </div>
+
+    <!-- Cache Status Indicator -->
+    <div class="cache-indicator" id="cacheIndicator">
+        <div>
+            <span class="status-dot" id="statusDot"></span>
+            <strong id="statusText">Checking...</strong>
+        </div>
+        <small id="cacheInfo"></small>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-newspaper"></i> FU News Portal
+                <span id="connectionBadge" class="badge bg-success ms-2" style="font-size: 0.7rem;">
+                    <i class="fas fa-circle" style="font-size: 6px;"></i> Online
+                </span>
+            </div>
+            <a href="/Auth/Index" class="btn btn-light">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Search Container -->
+        <div class="search-container">
+            <h2 class="mb-4"><i class="fas fa-search"></i> Search News</h2>
+
+            <!-- Global Search -->
+            <div class="search-box">
+                <input type="text" class="form-control" id="globalSearch" placeholder="Search by title, content...">
+                <button onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="filter-section">
+                <button class="filter-toggle" onclick="toggleFilters()">
+                    <i class="fas fa-filter"></i> Advanced Filters
+                    <i class="fas fa-chevron-down float-end" id="filterIcon"></i>
+                </button>
+
+                <div id="advancedFilters" style="display: none; margin-top: 1rem;">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tag</label>
+                            <select class="form-select" id="tagFilter">
+                                <option value="">All Tags</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Author</label>
+                            <input type="text" class="form-control" id="createdByFilter" placeholder="Author name">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Created Date</label>
+                            <input type="date" class="form-control" id="dateFilter">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort Section -->
+            <div class="mt-3">
+                <label>Sort by:</label>
+                <select class="form-select" id="sortBy" style="width: auto; display: inline-block; margin-left: 10px;" onchange="performSearch()">
+                    <option value="CreatedDate desc">Newest</option>
+                    <option value="CreatedDate asc">Oldest</option>
+                    <option value="NewsTitle asc">Title (A-Z)</option>
+                    <option value="NewsTitle desc">Title (Z-A)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="search-container">
+            <div class="result-count" id="resultCount" style="margin-bottom: 1rem; font-size: 1.1rem;"></div>
+            <div id="newsResults"></div>
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Loading news...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Detail Modal -->
+    <div class="modal fade" id="newsDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent"></div>
+                    <div class="related-news" id="relatedNewsSection" style="display: none; margin-top: 2rem;">
+                        <h5><i class="fas fa-link"></i> Related News</h5>
+                        <div id="relatedNewsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API URLs
+        const API_BASE = 'https://localhost:7135/api';
+        const API_NEWS = `${API_BASE}/ActiveNews`;
+        const API_CATEGORY = `${API_BASE}/activateCategory`;
+        const API_TAG = `${API_BASE}/Tag`;
+
+        // Global variables
+        let isOnline = navigator.onLine;
+        let allNewsData = [];
+        let allCategories = [];
+        let allTags = [];
+        let currentModal = null;
+
+        // Initialize app
+        $(document).ready(function() {
+            console.log('🚀 Initializing FU News Portal...');
+
+            setupEventListeners();
+            loadDataFromAPI();
+
+            // Auto refresh every 60 seconds if online
+            setInterval(function() {
+                if (navigator.onLine && !isOnline) {
+                    console.log('🔄 Connection restored');
+                    loadDataFromAPI();
+                }
+            }, 60000);
+        });
+
+        function setupEventListeners() {
+            // Search on Enter key
+            $('#globalSearch').keypress(function(e) {
+                if (e.which === 13) {
+                    performSearch();
+                }
+            });
+
+            // Online/Offline events
+            window.addEventListener('online', function() {
+                console.log('✅ Internet connection restored');
+                loadDataFromAPI();
+            });
+
+            window.addEventListener('offline', function() {
+                console.log('⚠️ Internet connection lost');
+                isOnline = false;
+                updateUI();
+                loadFromCache();
+            });
+        }
+
+        function loadDataFromAPI() {
+            console.log('📡 Loading data from API...');
+            $('#loadingIndicator').show();
+
+            Promise.all([
+                loadNews(),
+                loadCategories(),
+                loadTags()
+            ])
+            .then(function() {
+                console.log('✅ ONLINE MODE - Loaded successfully!');
+                console.log('📰 News:', allNewsData.length);
+                console.log('📂 Categories:', allCategories.length);
+                console.log('🏷️ Tags:', allTags.length);
+
+                isOnline = true;
+                saveToCache();
+                updateUI();
+                performSearch();
+                $('#loadingIndicator').hide();
+            })
+            .catch(function(error) {
+                console.log('❌ Failed to connect to API');
+                console.log('🔄 Switching to OFFLINE MODE');
+
+                isOnline = false;
+                updateUI();
+                loadFromCache();
+                $('#loadingIndicator').hide();
+            });
+        }
+
+        function loadNews() {
+            return $.ajax({
+                url: `${API_NEWS}?$expand=Category,CreatedBy,Tags&$filter=NewsStatus eq true`,
+                method: 'GET',
+                timeout: 10000
+            }).then(function(data) {
+                allNewsData = data.value || [];
+                return data;
+            });
+        }
+
+        function loadCategories() {
+            return $.ajax({
+                url: API_CATEGORY,
+                method: 'GET',
+                timeout: 10000
+            }).then(function(data) {
+                allCategories = data.value || data || [];
+                updateCategoryFilter();
+                return data;
+            });
+        }
+
+        function loadTags() {
+            return $.ajax({
+                url: API_TAG,
+                method: 'GET',
+                timeout: 10000
+            }).then(function(data) {
+                allTags = data.value || data || [];
+                updateTagFilter();
+                return data;
+            });
+        }
+
+        function saveToCache() {
+            try {
+                localStorage.setItem('funews_data', JSON.stringify(allNewsData));
+                localStorage.setItem('funews_categories', JSON.stringify(allCategories));
+                localStorage.setItem('funews_tags', JSON.stringify(allTags));
+                localStorage.setItem('funews_lastupdate', new Date().toISOString());
+                console.log('💾 Saved to cache');
+            } catch (e) {
+                console.error('❌ Cache save error:', e);
+            }
+        }
+
+        function loadFromCache() {
+            try {
+                const cachedNews = localStorage.getItem('funews_data');
+                const cachedCategories = localStorage.getItem('funews_categories');
+                const cachedTags = localStorage.getItem('funews_tags');
+
+                if (cachedNews) {
+                    allNewsData = JSON.parse(cachedNews);
+                    console.log('📦 Loaded', allNewsData.length, 'articles from cache');
+                }
+
+                if (cachedCategories) {
+                    allCategories = JSON.parse(cachedCategories);
+                    updateCategoryFilter();
+                }
+
+                if (cachedTags) {
+                    allTags = JSON.parse(cachedTags);
+                    updateTagFilter();
+                }
+
+                if (allNewsData.length > 0) {
+                    performSearch();
+                } else {
+                    $('#newsResults').html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>No data available</strong><br>
+                            You are offline and no cached data is available. Please connect to the internet.
+                        </div>
+                    `);
+                }
+            } catch (e) {
+                console.error('❌ Cache load error:', e);
+            }
+        }
+
+        function updateCategoryFilter() {
+            $('#categoryFilter').empty().append('<option value="">All Categories</option>');
+            allCategories.forEach(function(cat) {
+                const id = cat.categoryId || cat.CategoryId;
+                const name = cat.categoryName || cat.CategoryName;
+                $('#categoryFilter').append(`<option value="${id}">${name}</option>`);
+            });
+        }
+
+        function updateTagFilter() {
+            $('#tagFilter').empty().append('<option value="">All Tags</option>');
+            allTags.forEach(function(tag) {
+                $('#tagFilter').append(`<option value="${tag.TagId}">${tag.TagName}</option>`);
+            });
+        }
+
+        function updateUI() {
+            const badge = $('#connectionBadge');
+            const banner = $('#offlineBanner');
+            const indicator = $('#cacheIndicator');
+            const dot = $('#statusDot');
+            const text = $('#statusText');
+            const info = $('#cacheInfo');
+
+            if (isOnline) {
+                badge.removeClass('bg-danger').addClass('bg-success')
+                    .html('<i class="fas fa-circle" style="font-size: 6px;"></i> Online');
+                banner.removeClass('show');
+                dot.removeClass('offline').addClass('online');
+                text.text('Connected');
+
+                const lastUpdate = localStorage.getItem('funews_lastupdate');
+                if (lastUpdate) {
+                    info.text('Updated: ' + new Date(lastUpdate).toLocaleString('en-US'));
+                }
+
+                indicator.addClass('show');
+                setTimeout(function() { indicator.removeClass('show'); }, 3000);
+            } else {
+                badge.removeClass('bg-success').addClass('bg-danger')
+                    .html('<i class="fas fa-circle" style="font-size: 6px;"></i> Offline');
+                dot.removeClass('online').addClass('offline');
+                text.text('Offline Mode');
+                info.text('Viewing cached data');
+
+                const lastUpdate = localStorage.getItem('funews_lastupdate');
+                if (lastUpdate) {
+                    $('#lastUpdateTime').text(new Date(lastUpdate).toLocaleString('en-US'));
+                    banner.addClass('show');
+                }
+
+                indicator.addClass('show');
+            }
+        }
+
+        function toggleFilters() {
+            const filters = $('#advancedFilters');
+            const icon = $('#filterIcon');
+
+            if (filters.is(':visible')) {
+                filters.slideUp();
+                icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            } else {
+                filters.slideDown();
+                icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            }
+        }
+
+        function performSearch() {
+            if (allNewsData.length === 0) {
+                $('#newsResults').html(`
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> No data to display.
+                    </div>
+                `);
+                return;
+            }
+
+            // Apply filters
+            let filtered = allNewsData.filter(function(news) {
+                const keyword = $('#globalSearch').val().trim().toLowerCase();
+                const categoryId = $('#categoryFilter').val();
+                const tagId = $('#tagFilter').val();
+                const author = $('#createdByFilter').val().trim().toLowerCase();
+                const date = $('#dateFilter').val();
+
+                // Keyword filter
+                if (keyword) {
+                    const title = (news.NewsTitle || '').toLowerCase();
+                    const headline = (news.Headline || '').toLowerCase();
+                    const content = (news.NewsContent || '').toLowerCase();
+                    if (!title.includes(keyword) && !headline.includes(keyword) && !content.includes(keyword)) {
+                        return false;
+                    }
+                }
+
+                // Category filter
+                if (categoryId && news.Category) {
+                    if (news.Category.CategoryId != categoryId) {
+                        return false;
+                    }
+                }
+
+                // Tag filter
+                if (tagId && news.Tags) {
+                    const hasTag = news.Tags.some(function(t) { return t.TagId == tagId; });
+                    if (!hasTag) {
+                        return false;
+                    }
+                }
+
+                // Author filter
+                if (author && news.CreatedBy) {
+                    const authorName = (news.CreatedBy.AccountName || '').toLowerCase();
+                    if (!authorName.includes(author)) {
+                        return false;
+                    }
+                }
+
+                // Date filter
+                if (date) {
+                    const newsDate = new Date(news.CreatedDate).toDateString();
+                    const filterDate = new Date(date).toDateString();
+                    if (newsDate !== filterDate) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Apply sorting
+            const sortBy = $('#sortBy').val();
+            const [field, order] = sortBy.split(' ');
+
+            filtered.sort(function(a, b) {
+                let valueA, valueB;
+
+                if (field === 'CreatedDate') {
+                    valueA = new Date(a.CreatedDate);
+                    valueB = new Date(b.CreatedDate);
+                } else if (field === 'NewsTitle') {
+                    valueA = (a.NewsTitle || '').toLowerCase();
+                    valueB = (b.NewsTitle || '').toLowerCase();
+                }
+
+                if (order === 'asc') {
+                    return valueA > valueB ? 1 : -1;
+                } else {
+                    return valueA < valueB ? 1 : -1;
+                }
+            });
+
+            displayResults(filtered);
+        }
+
+        function displayResults(results) {
+            const sourceLabel = isOnline ?
+                '<span class="badge bg-success ms-2"><i class="fas fa-wifi"></i> Online</span>' :
+                '<span class="badge bg-warning text-dark ms-2"><i class="fas fa-database"></i> Offline</span>';
+
+            $('#resultCount').html(`Found <strong>${results.length}</strong> articles ${sourceLabel}`);
+
+            if (results.length === 0) {
+                $('#newsResults').html(`
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No articles found.
+                    </div>
+                `);
+                return;
+            }
+
+            let html = '';
+            results.forEach(function(news) {
+                const date = new Date(news.CreatedDate).toLocaleDateString('en-US');
+                const tags = news.Tags ? news.Tags.map(function(t) {
+                    return `<span class="badge-tag">${t.TagName}</span>`;
+                }).join(' ') : '';
+
+                html += `
+                    <div class="news-card" onclick="showNewsDetail('${news.NewsArticleId}')">
+                        <div class="news-title">${news.NewsTitle}</div>
+                        <div class="news-headline">${news.Headline}</div>
+                        <div class="news-meta">
+                            <span><i class="fas fa-folder"></i> ${news.Category ? news.Category.CategoryName : 'N/A'}</span>
+                            <span><i class="fas fa-user"></i> ${news.CreatedBy ? news.CreatedBy.AccountName : 'Unknown'}</span>
+                            <span><i class="fas fa-calendar"></i> ${date}</span>
+                        </div>
+                        <div>
+                            <span class="badge-category">${news.Category ? news.Category.CategoryName : 'Uncategorized'}</span>
+                            ${tags}
+                        </div>
+                    </div>
+                `;
+            });
+
+            $('#newsResults').html(html);
+        }
+
+        function showNewsDetail(newsId) {
+            const news = allNewsData.find(function(n) { return n.NewsArticleId === newsId; });
+
+            if (!news) {
+                alert('Article not found');
+                return;
+            }
+
+            const date = new Date(news.CreatedDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const tags = news.Tags ? news.Tags.map(function(t) {
+                return `<span class="badge-tag">${t.TagName}</span>`;
+            }).join(' ') : '';
+
+            $('#modalTitle').text(news.NewsTitle);
+            $('#modalContent').html(`
+                <div class="news-headline" style="font-size: 1.1rem; margin-bottom: 1rem;">
+                    <strong>${news.Headline}</strong>
+                </div>
+                <div class="news-meta" style="margin-bottom: 1.5rem;">
+                    <span><i class="fas fa-folder"></i> ${news.Category ? news.Category.CategoryName : 'N/A'}</span>
+                    <span><i class="fas fa-user"></i> ${news.CreatedBy ? news.CreatedBy.AccountName : 'Unknown'}</span>
+                    <span><i class="fas fa-calendar"></i> ${date}</span>
+                    <span><i class="fas fa-link"></i> ${news.NewsSource || 'N/A'}</span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    ${tags}
+                </div>
+                <div class="news-content" style="line-height: 1.8;">
+                    ${news.NewsContent}
+                </div>
+            `);
+
+            if (currentModal) {
+                currentModal.dispose();
+            }
+
+            currentModal = new bootstrap.Modal($('#newsDetailModal')[0]);
+            currentModal.show();
+
+            loadRelatedNews(news);
+
+            $('#newsDetailModal').one('hidden.bs.modal', function () {
+                if (currentModal) {
+                    currentModal.dispose();
+                    currentModal = null;
+                }
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('overflow', '').css('padding-right', '');
+            });
+        }
+
+        function loadRelatedNews(currentNews) {
+            const categoryId = currentNews.Category ? currentNews.Category.CategoryId : null;
+            const currentTags = currentNews.Tags ? currentNews.Tags.map(function(t) { return t.TagId; }) : [];
+
+            const related = allNewsData.filter(function(news) {
+                if (news.NewsArticleId === currentNews.NewsArticleId) {
+                    return false;
+                }
+
+                if (categoryId && news.Category && news.Category.CategoryId === categoryId) {
+                    return true;
+                }
+
+                if (currentTags.length > 0 && news.Tags) {
+                    const hasCommonTag = news.Tags.some(function(t) { return currentTags.includes(t.TagId); });
+                    if (hasCommonTag) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }).slice(0, 3);
+
+            if (related.length > 0) {
+                let html = '';
+                related.forEach(function(news) {
+                    const date = new Date(news.CreatedDate).toLocaleDateString('en-US');
+                    html += `
+                        <div class="related-news-item" onclick="event.stopPropagation(); showNewsDetail('${news.NewsArticleId}')">
+                            <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                ${news.NewsTitle}
+                            </div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">
+                                <i class="fas fa-folder"></i> ${news.Category ? news.Category.CategoryName : 'N/A'} |
+                                <i class="fas fa-calendar"></i> ${date}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#relatedNewsList').html(html);
+                $('#relatedNewsSection').show();
+            } else {
+                $('#relatedNewsSection').hide();
+            }
+        }
+    </script>
+</body>
+</html>
