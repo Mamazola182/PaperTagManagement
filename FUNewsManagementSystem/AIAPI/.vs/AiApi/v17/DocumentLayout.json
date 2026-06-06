@@ -1,0 +1,133 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\services\\geminiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\services\\geminiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\controllers\\aicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\controllers\\aicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\models\\tagsuggestionrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\models\\tagsuggestionrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\models\\tagsuggestionresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\models\\tagsuggestionresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|d:\\he182392_nguyenngocminhhung_se1842_a02\\funewsmanagementsystem\\aiapi\\aiapi\\aiapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{A8C35DE8-06B5-4D76-AC29-1B3CE3B1320C}|AiApi\\AiApi.csproj|solutionrelative:aiapi\\aiapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GeminiService.cs",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Services\\GeminiService.cs",
+              "RelativeDocumentMoniker": "AiApi\\Services\\GeminiService.cs",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Services\\GeminiService.cs",
+              "RelativeToolTip": "AiApi\\Services\\GeminiService.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAAwA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-18T05:11:31.952Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AiController.cs",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Controllers\\AiController.cs",
+              "RelativeDocumentMoniker": "AiApi\\Controllers\\AiController.cs",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Controllers\\AiController.cs",
+              "RelativeToolTip": "AiApi\\Controllers\\AiController.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAkAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-26T10:22:53.389Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TagSuggestionResponse.cs",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Models\\TagSuggestionResponse.cs",
+              "RelativeDocumentMoniker": "AiApi\\Models\\TagSuggestionResponse.cs",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Models\\TagSuggestionResponse.cs",
+              "RelativeToolTip": "AiApi\\Models\\TagSuggestionResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-26T10:20:12.214Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "TagSuggestionRequest.cs",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Models\\TagSuggestionRequest.cs",
+              "RelativeDocumentMoniker": "AiApi\\Models\\TagSuggestionRequest.cs",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Models\\TagSuggestionRequest.cs",
+              "RelativeToolTip": "AiApi\\Models\\TagSuggestionRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-26T10:20:01.191Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "AiApi.http",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\AiApi.http",
+              "RelativeDocumentMoniker": "AiApi\\AiApi.http",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\AiApi.http",
+              "RelativeToolTip": "AiApi\\AiApi.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2025-10-26T10:19:14.497Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Program.cs",
+              "RelativeDocumentMoniker": "AiApi\\Program.cs",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\Program.cs",
+              "RelativeToolTip": "AiApi\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-26T10:15:18.112Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\appsettings.json",
+              "RelativeDocumentMoniker": "AiApi\\appsettings.json",
+              "ToolTip": "D:\\He182392_NguyenNgocMinhHung_SE1842_A02\\FUNewsManagementSystem\\AIAPI\\AiApi\\appsettings.json",
+              "RelativeToolTip": "AiApi\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-10-25T11:35:06.058Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

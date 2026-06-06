@@ -1,0 +1,18 @@
+[
+  {
+    "ContainingType": "CoreAPI.Controllers.AiController",
+    "Method": "SuggestTags",
+    "RelativePath": "api/ai/suggesttags",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "AiApi.Models.TagSuggestionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
